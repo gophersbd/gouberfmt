@@ -136,28 +136,6 @@ func (i *mutexPointerInspector) inspectInlineVariableDeclarations(node ast.Node)
 	return ret
 }
 
-func check(node ast.Expr) bool {
-	obj, ok := node.(*ast.SelectorExpr)
-	if !ok {
-		return true
-	}
-
-	ident, ok := obj.X.(*ast.Ident)
-	if !ok {
-		return true
-	}
-
-	if ident.Name != "sync" {
-		return true
-	}
-
-	if obj.Sel.Name != "Mutex" && obj.Sel.Name != "RWMutex" {
-		return true
-	}
-
-	return false
-}
-
 func (i *mutexPointerInspector) inspectTypeDeclarations(node ast.Node) bool {
 	decl, ok := node.(*ast.GenDecl)
 	if !ok {
@@ -190,4 +168,27 @@ func (i *mutexPointerInspector) inspectTypeDeclarations(node ast.Node) bool {
 	}
 
 	return ret
+}
+
+
+func check(node ast.Expr) bool {
+	obj, ok := node.(*ast.SelectorExpr)
+	if !ok {
+		return true
+	}
+
+	ident, ok := obj.X.(*ast.Ident)
+	if !ok {
+		return true
+	}
+
+	if ident.Name != "sync" {
+		return true
+	}
+
+	if obj.Sel.Name != "Mutex" && obj.Sel.Name != "RWMutex" {
+		return true
+	}
+
+	return false
 }
