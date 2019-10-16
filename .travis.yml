@@ -1,0 +1,17 @@
+language: go
+
+sudo: required
+
+matrix:
+  include:
+    - go: tip
+    - go: 1.13.1
+    - go: 1.12.8
+
+before_script:
+  - ./hack/scripts/install_go_tools.sh
+
+script:
+  - make check
+  - make compile
+  - make test

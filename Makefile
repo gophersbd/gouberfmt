@@ -4,7 +4,6 @@
 # Variables
 PROJECT = gouberfmt
 REPO_ROOT = github.com/gophersbd
-DOCKER_PROJECT = sadlil
 ROOT = ${REPO_ROOT}/${PROJECT}
 
 fmt:
@@ -61,6 +60,10 @@ clean:
 	@rm -rf bin
 	@rm -rf builds
 	@go clean
+
+cover:
+	@go test -v -covermode=count -coverprofile=coverage.out $(TEST_PKGS)
+	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $(COVERALLS_TOKEN)
 
 VERSION ?= ''
 release:

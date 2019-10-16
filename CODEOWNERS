@@ -1,0 +1,14 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+*   @sadlil @alaminopu
+
+# Additional files from root directory
+Makefile       @sadlil
+/hack/         @sadlil
+/vendor/       @sadlil
+CODEOWNERS     @sadlil
+
+# Owners for particular analyzers
+/analyzers/                    @sadlil
+/analyzers/interfacepointer/   @sadlil
+/analyzers/mutexpointer/       @aerokite
