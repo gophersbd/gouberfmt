@@ -72,12 +72,17 @@ func (i *mutexPointerInspector) inspectVariableDeclarations(node ast.Node) bool 
 			return true
 		}
 
-		if check(pointer.X) {
+		obj, ok := pointer.X.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		if check(obj) {
 			return true
 		}
 
 		for _, varName := range varSpec.Names {
-			i.pass.Reportf(varName.Pos(), "mutex-pointer: var %s uses pointer to mutex", varName.Name)
+			i.pass.Reportf(varName.Pos(), "mutex-pointer: var %s uses pointer to sync.%s", varName.Name, obj.Sel.Name)
 		}
 
 		ret = false
@@ -117,7 +122,12 @@ func (i *mutexPointerInspector) inspectInlineVariableDeclarations(node ast.Node)
 
 		arg := expr.Args[0]
 
-		found := check(arg)
+		obj, ok := arg.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		found := check(obj)
 		if found {
 			continue
 		}
@@ -128,7 +138,7 @@ func (i *mutexPointerInspector) inspectInlineVariableDeclarations(node ast.Node)
 		if !ok {
 			continue
 		}
-		i.pass.Reportf(expr.Pos(), "mutex-pointer: var %s uses pointer to mutex", varName)
+		i.pass.Reportf(expr.Pos(), "mutex-pointer: var %s uses pointer to sync.%s", varName, obj.Sel.Name)
 
 		ret = true
 	}
@@ -158,11 +168,16 @@ func (i *mutexPointerInspector) inspectTypeDeclarations(node ast.Node) bool {
 			return true
 		}
 
-		if check(pointer.X) {
+		obj, ok := pointer.X.(*ast.SelectorExpr)
+		if !ok {
 			return true
 		}
 
-		i.pass.Reportf(typeSpec.Pos(), "mutex-pointer: type %s points to pointer of mutex", typeSpec.Name)
+		if check(obj) {
+			return true
+		}
+
+		i.pass.Reportf(typeSpec.Pos(), "mutex-pointer: type %s uses pointer to sync.%s", typeSpec.Name, obj.Sel.Name)
 
 		ret = false
 	}
@@ -170,13 +185,7 @@ func (i *mutexPointerInspector) inspectTypeDeclarations(node ast.Node) bool {
 	return ret
 }
 
-
-func check(node ast.Expr) bool {
-	obj, ok := node.(*ast.SelectorExpr)
-	if !ok {
-		return true
-	}
-
+func check(obj *ast.SelectorExpr) bool {
 	ident, ok := obj.X.(*ast.Ident)
 	if !ok {
 		return true
