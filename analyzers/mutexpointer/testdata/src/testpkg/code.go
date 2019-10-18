@@ -9,7 +9,7 @@ var x, y *sync.Mutex // want "mutex-pointer: var x uses pointer to sync.Mutex" "
 
 var (
 	invalidMutextInBlock *sync.Mutex // want "mutex-pointer: var invalidMutextInBlock uses pointer to sync.Mutex"
-	validMutex            sync.Mutex
+	validMutex           sync.Mutex
 )
 
 type rwm *sync.RWMutex // want "mutex-pointer: type rwm uses pointer to sync.RWMutex"

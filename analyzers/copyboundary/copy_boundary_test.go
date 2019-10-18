@@ -1,4 +1,4 @@
-package copyslicemap
+package copyboundary
 
 import (
 	"testing"

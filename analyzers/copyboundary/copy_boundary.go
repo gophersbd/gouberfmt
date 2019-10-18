@@ -1,7 +1,7 @@
-// Package copyslicemap defines an Analyzer that checks for
+// Package copyboundary defines an Analyzer that checks for
 // uses of copy of slice & map.
 // https://github.com/uber-go/guide/blob/master/style.md#copy-slices-and-maps-at-boundaries
-package copyslicemap
+package copyboundary
 
 import (
 	"go/ast"
@@ -17,7 +17,7 @@ of scenarios when they need to be copied..
 `
 
 var Analyzer = &analysis.Analyzer{
-	Name: "copyslicemap",
+	Name: "copyboundary",
 	Doc:  Doc,
 	Run:  run,
 }
@@ -63,7 +63,7 @@ func (i *copySliceMapInspector) inspectAssignStatement(node ast.Node) bool {
 		return true
 	}
 
-	i.pass.Reportf(assignStmt.Pos(), "copy-slice-map: copies a %s directly", typ)
+	i.pass.Reportf(assignStmt.Pos(), "copy-boundary: copies a %s directly", typ)
 
 	return false
 }
