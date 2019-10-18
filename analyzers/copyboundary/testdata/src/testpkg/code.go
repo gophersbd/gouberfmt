@@ -7,11 +7,23 @@ var stringMap map[string]string
 var justInt int
 
 func testMapFunc(x map[string]string) {
-	stringMap = x // want "copy-slice-map: copies a map directly"
+	stringMap = x // want "copy-boundary: copies a map directly"
+}
+
+func testMapCopyFunc(x map[string]string) {
+	stringMap = make(map[string]string, len(x))
+	for key, val := range x {
+		stringMap[key] = val
+	}
 }
 
 func testSliceFunc(x []int) {
-	slice = x // want "copy-slice-map: copies a slice directly"
+	slice = x // want "copy-boundary: copies a slice directly"
+}
+
+func testSliceCopyFunc(x []int) {
+	slice = make([]int, len(x))
+	copy(slice, x)
 }
 
 func testAssignFunc(x int) {
