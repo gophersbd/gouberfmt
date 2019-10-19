@@ -32,13 +32,13 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	return nil, nil
 }
 
-type copySliceMapInspector struct {
+type copyBoundaryInspector struct {
 	pass        *analysis.Pass
 	collections []func(node ast.Node) bool
 }
 
-func newInspector(pass *analysis.Pass) *copySliceMapInspector {
-	inspectors := &copySliceMapInspector{
+func newInspector(pass *analysis.Pass) *copyBoundaryInspector {
+	inspectors := &copyBoundaryInspector{
 		pass: pass,
 	}
 	inspectors.collections = []func(ast.Node) bool{
@@ -47,7 +47,7 @@ func newInspector(pass *analysis.Pass) *copySliceMapInspector {
 	return inspectors
 }
 
-func (i *copySliceMapInspector) inspectAssignStatement(node ast.Node) bool {
+func (i *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
 	assignStmt, ok := node.(*ast.AssignStmt)
 	if !ok {
 		return true
