@@ -47,54 +47,90 @@ func newInspector(pass *analysis.Pass) *copyBoundaryInspector {
 	return inspectors
 }
 
-func (i *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
+func (c *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
 	assignStmt, ok := node.(*ast.AssignStmt)
 	if !ok {
 		return true
 	}
 
-	typ := checkType(assignStmt.Lhs)
-	if typ == "" {
-		return true
+	flag := false
+	for i := 0; i < len(assignStmt.Rhs); i++ {
+		lhs := assignStmt.Lhs[i]
+
+		ident, ok := lhs.(*ast.Ident)
+
+		if !ok || ident.Obj == nil || ident.Name == "_" {
+			continue
+		}
+
+		ok = isSliceOrMap(assignStmt.Rhs[i])
+		if !ok {
+			continue
+		}
+
+		flag = ok
 	}
 
-	typ = checkType(assignStmt.Rhs)
-	if typ == "" {
-		return true
+	if flag {
+		c.pass.Reportf(assignStmt.Pos(), "copy-boundary: this line copies slice/map directly")
 	}
-
-	i.pass.Reportf(assignStmt.Pos(), "copy-boundary: copies a %s directly", typ)
 
 	return false
 }
 
-func checkType(obj []ast.Expr) string {
-	if len(obj) > 1 {
-		return ""
+func isSliceOrMap(rootExpr ast.Expr) bool {
+	obj := GetObj(rootExpr)
+	if obj == nil {
+		return false
+	}
+	decl := obj.Decl
+	expr := GetExpr(decl)
+
+	if expr == nil {
+		assignStmt, ok := decl.(*ast.AssignStmt)
+		if !ok {
+			return false
+		}
+
+		for i := 0; i < len(assignStmt.Rhs); i++ {
+			childObj := GetObj(assignStmt.Lhs[i])
+			if childObj == nil {
+				continue
+			}
+
+			if obj.Name == childObj.Name {
+				expr = GetExpr(assignStmt.Rhs[i])
+				break
+			}
+		}
 	}
 
-	x, ok := obj[0].(*ast.Ident)
+	switch expr.(type) {
+	case *ast.ArrayType, *ast.MapType:
+		return true
+	}
+
+	return false
+}
+
+func GetObj(expr ast.Expr) *ast.Object {
+	ident, ok := expr.(*ast.Ident)
 	if !ok {
-		return ""
+		return nil
 	}
 
-	var typ ast.Expr
+	return ident.Obj
+}
 
-	switch decl := x.Obj.Decl.(type) {
+func GetExpr(decl interface{}) ast.Expr {
+	switch decl := decl.(type) {
 	case *ast.ValueSpec:
-		typ = decl.Type
+		return decl.Type
 	case *ast.Field:
-		typ = decl.Type
-	default:
-		return ""
+		return decl.Type
+	case *ast.CompositeLit:
+		return decl.Type
 	}
 
-	switch typ.(type) {
-	case *ast.ArrayType:
-		return "slice"
-	case *ast.MapType:
-		return "map"
-	}
-
-	return ""
+	return nil
 }
