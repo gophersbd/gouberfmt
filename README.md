@@ -24,3 +24,9 @@ Experimental golang static analysis tool that supports - https://github.com/uber
       anotherSlice = slice // "copy-boundary: copies a slice directly"
     }
     ```
+
+* Chan Size
+
+    ```golang
+    c := make(chan int, 64) // "chan-size: channel size should be one or none"
+    ```
