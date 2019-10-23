@@ -47,54 +47,87 @@ func newInspector(pass *analysis.Pass) *copyBoundaryInspector {
 	return inspectors
 }
 
-func (i *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
+func (c *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
 	assignStmt, ok := node.(*ast.AssignStmt)
 	if !ok {
 		return true
 	}
 
-	typ := checkType(assignStmt.Lhs)
-	if typ == "" {
-		return true
-	}
+	for i := 0; i < len(assignStmt.Rhs); i++ {
+		lhs := assignStmt.Lhs[i]
 
-	typ = checkType(assignStmt.Rhs)
-	if typ == "" {
-		return true
-	}
+		ident, ok := lhs.(*ast.Ident)
 
-	i.pass.Reportf(assignStmt.Pos(), "copy-boundary: copies a %s directly", typ)
+		if !ok || ident.Obj == nil || ident.Name == "_" {
+			continue
+		}
+
+		typ := isSliceOrMap(assignStmt.Rhs[i])
+		if typ == "" {
+			continue
+		}
+
+		c.pass.Reportf(lhs.Pos(), "copy-boundary: copies a %s directly", typ)
+	}
 
 	return false
 }
 
-func checkType(obj []ast.Expr) string {
-	if len(obj) > 1 {
-		return ""
+func isSliceOrMap(rootExpr ast.Expr) (typ string) {
+	obj := GetObj(rootExpr)
+	if obj == nil {
+		return
+	}
+	decl := obj.Decl
+	expr := GetExpr(decl)
+
+	if expr == nil {
+		assignStmt, ok := decl.(*ast.AssignStmt)
+		if !ok {
+			return
+		}
+
+		for i := 0; i < len(assignStmt.Rhs); i++ {
+			childObj := GetObj(assignStmt.Lhs[i])
+			if childObj == nil {
+				continue
+			}
+
+			if obj.Name == childObj.Name {
+				expr = GetExpr(assignStmt.Rhs[i])
+				break
+			}
+		}
 	}
 
-	x, ok := obj[0].(*ast.Ident)
-	if !ok {
-		return ""
-	}
-
-	var typ ast.Expr
-
-	switch decl := x.Obj.Decl.(type) {
-	case *ast.ValueSpec:
-		typ = decl.Type
-	case *ast.Field:
-		typ = decl.Type
-	default:
-		return ""
-	}
-
-	switch typ.(type) {
+	switch expr.(type) {
 	case *ast.ArrayType:
-		return "slice"
+		typ = "slice"
 	case *ast.MapType:
-		return "map"
+		typ = "map"
 	}
 
-	return ""
+	return
+}
+
+func GetObj(expr ast.Expr) *ast.Object {
+	ident, ok := expr.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	return ident.Obj
+}
+
+func GetExpr(decl interface{}) ast.Expr {
+	switch decl := decl.(type) {
+	case *ast.ValueSpec:
+		return decl.Type
+	case *ast.Field:
+		return decl.Type
+	case *ast.CompositeLit:
+		return decl.Type
+	}
+
+	return nil
 }
