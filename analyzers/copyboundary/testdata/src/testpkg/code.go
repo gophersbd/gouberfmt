@@ -9,7 +9,7 @@ var stringMap map[string]string
 var justInt int
 
 func testMapFunc(x map[string]string) {
-	stringMap = x // want "copy-boundary: this line copies slice/map directly"
+	stringMap = x // want "copy-boundary: copies a map directly"
 }
 
 func testMapCopyFunc(x map[string]string) {
@@ -20,19 +20,19 @@ func testMapCopyFunc(x map[string]string) {
 }
 
 func testSliceFunc(x []int) {
-	slice = x // want "copy-boundary: this line copies slice/map directly"
+	slice = x // want "copy-boundary: copies a slice directly"
 }
 
 func testMultipleSliceFunc() {
 	data1 := []int{1, 2, 3}
 	data2 := []int{1, 2, 3}
-	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: this line copies slice/map directly"
+	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: copies a slice directly" "copy-boundary: copies a slice directly"
 	fmt.Println(dataCopied1, dataCopied2)
 }
 
 func testAssignMultipleSliceFunc() {
 	data1, data2 := []int{1, 2, 3}, []int{1, 3}
-	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: this line copies slice/map directly"
+	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: copies a slice directly" "copy-boundary: copies a slice directly"
 	fmt.Println(dataCopied1, dataCopied2)
 }
 
@@ -44,7 +44,7 @@ func testAssignMultipleDiffTypeFunc() {
 
 func testAssignMultipleDiffTypeWithSliceFunc() {
 	data1, data2 := "stringData", []int{1, 2, 3}
-	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: this line copies slice/map directly"
+	dataCopied1, dataCopied2 := data1, data2 // want "copy-boundary: copies a slice directly"
 	fmt.Println(dataCopied1, dataCopied2)
 }
 
@@ -63,7 +63,7 @@ func testAssignFunc(x int) {
 	slice = []int{1, 2, 2}
 
 	newSlice := []int{1, 2, 3}
-	sliceCopied := newSlice // want "copy-boundary: this line copies slice/map directly"
+	sliceCopied := newSlice // want "copy-boundary: copies a slice directly"
 	fmt.Println(sliceCopied)
 }
 
@@ -82,6 +82,6 @@ func testAssignReturnedSliceFunc(x int) {
 
 func testAssignMapAndSliceFunc() {
 	newMap, newSlice := []int{1, 2, 3}, map[string]string{"abc": "def"}
-	anotherMap, anotherSlice := newMap, newSlice // want "copy-boundary: this line copies slice/map directly"
+	anotherMap, anotherSlice := newMap, newSlice // want "copy-boundary: copies a slice directly" "copy-boundary: copies a map directly"
 	fmt.Println(anotherMap, anotherSlice)
 }

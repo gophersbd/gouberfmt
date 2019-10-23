@@ -53,7 +53,6 @@ func (c *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
 		return true
 	}
 
-	flag := false
 	for i := 0; i < len(assignStmt.Rhs); i++ {
 		lhs := assignStmt.Lhs[i]
 
@@ -63,25 +62,21 @@ func (c *copyBoundaryInspector) inspectAssignStatement(node ast.Node) bool {
 			continue
 		}
 
-		ok = isSliceOrMap(assignStmt.Rhs[i])
-		if !ok {
+		typ := isSliceOrMap(assignStmt.Rhs[i])
+		if typ == "" {
 			continue
 		}
 
-		flag = ok
-	}
-
-	if flag {
-		c.pass.Reportf(assignStmt.Pos(), "copy-boundary: this line copies slice/map directly")
+		c.pass.Reportf(lhs.Pos(), "copy-boundary: copies a %s directly", typ)
 	}
 
 	return false
 }
 
-func isSliceOrMap(rootExpr ast.Expr) bool {
+func isSliceOrMap(rootExpr ast.Expr) (typ string) {
 	obj := GetObj(rootExpr)
 	if obj == nil {
-		return false
+		return
 	}
 	decl := obj.Decl
 	expr := GetExpr(decl)
@@ -89,7 +84,7 @@ func isSliceOrMap(rootExpr ast.Expr) bool {
 	if expr == nil {
 		assignStmt, ok := decl.(*ast.AssignStmt)
 		if !ok {
-			return false
+			return
 		}
 
 		for i := 0; i < len(assignStmt.Rhs); i++ {
@@ -106,11 +101,13 @@ func isSliceOrMap(rootExpr ast.Expr) bool {
 	}
 
 	switch expr.(type) {
-	case *ast.ArrayType, *ast.MapType:
-		return true
+	case *ast.ArrayType:
+		typ = "slice"
+	case *ast.MapType:
+		typ = "map"
 	}
 
-	return false
+	return
 }
 
 func GetObj(expr ast.Expr) *ast.Object {
